@@ -1,0 +1,37 @@
+{% if not module.is_empty %}
+{% autoescape off %}
+    <div id="module_{{ module.id }}" class="{{ module.render_css_classes }}">
+        {% if module.show_title %}<h2>{{ module.title }}</h2>{% endif %}
+        <div class="dashboard-module-content">
+            <script type="text/javascript" src="https://www.google.com/jsapi"></script>
+            <script type="text/javascript">
+                {{module.graph_js_include}}
+                function drawVisualization() {
+                    var {{module.graph_div}}data = new google.visualization.DataTable();
+                    {% if module.graph_type == "AnnotatedTimeLine" %}
+                        {{module.graph_div}}data.addColumn('date', 'Date');
+                        {{module.graph_div}}data.addColumn('number', '{{module.value}}');
+                    {% else %}{% if module.graph_type == "PieChart" %}
+                        {{module.graph_div}}data.addColumn('string', '{{module.key}}');
+                        {{module.graph_div}}data.addColumn('number', '{{module.value}}');
+                    {% endif %}{% endif %}
+                    {% for h in allHistoricOptimalHitRates %}
+                        var myDate = new Date("{{h.dateAdded}}".replace(/\./g,""));
+                        {{module.graph_div}}data.addRow([myDate, {{h.rate}}]);
+                    {% endfor %}
+                    new google.visualization.{{module.graph_type}}(document.getElementById('{{module.graph_div}}'))
+                    .draw({{module.graph_div}}data, {'displayAnnotations': true, 'fill':50});
+                }
+                google.setOnLoadCallback(drawVisualization);
+            </script>
+            {% block module_content %}
+                <div id="{{module.graph_div}}" style="width:97%;height:{{module.height}}px;margin:auto;"></div>
+                <br />
+            {% endblock %}
+            {% if module.post_content %}
+            <p>{{ module.post_content }}</p>
+            {% endif %}
+        </div>
+    </div>
+{% endautoescape %}
+{% endif %}
